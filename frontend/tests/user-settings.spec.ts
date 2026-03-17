@@ -212,13 +212,13 @@ test("User can switch between theme modes", async ({ page }) => {
 
   await page.getByTestId("theme-button").click()
   await page.getByTestId("dark-mode").click()
-  await expect(page.locator("html")).toHaveClass(/dark/)
+  await expect(page.locator("html")).toHaveAttribute("data-theme", "dark")
 
   await expect(page.getByTestId("dark-mode")).not.toBeVisible()
 
   await page.getByTestId("theme-button").click()
   await page.getByTestId("light-mode").click()
-  await expect(page.locator("html")).toHaveClass(/light/)
+  await expect(page.locator("html")).toHaveAttribute("data-theme", "light")
 })
 
 test("Selected mode is preserved across sessions", async ({ page }) => {
@@ -227,7 +227,7 @@ test("Selected mode is preserved across sessions", async ({ page }) => {
   await page.getByTestId("theme-button").click()
   if (
     await page.evaluate(() =>
-      document.documentElement.classList.contains("dark"),
+      document.documentElement.getAttribute("data-theme") === "dark",
     )
   ) {
     await page.getByTestId("light-mode").click()
@@ -235,14 +235,14 @@ test("Selected mode is preserved across sessions", async ({ page }) => {
   }
 
   const isLightMode = await page.evaluate(() =>
-    document.documentElement.classList.contains("light"),
+    document.documentElement.getAttribute("data-theme") === "light",
   )
   expect(isLightMode).toBe(true)
 
   await page.getByTestId("theme-button").click()
   await page.getByTestId("dark-mode").click()
   let isDarkMode = await page.evaluate(() =>
-    document.documentElement.classList.contains("dark"),
+    document.documentElement.getAttribute("data-theme") === "dark",
   )
   expect(isDarkMode).toBe(true)
 
@@ -250,7 +250,37 @@ test("Selected mode is preserved across sessions", async ({ page }) => {
   await logInUser(page, firstSuperuser, firstSuperuserPassword)
 
   isDarkMode = await page.evaluate(() =>
-    document.documentElement.classList.contains("dark"),
+    document.documentElement.getAttribute("data-theme") === "dark",
   )
   expect(isDarkMode).toBe(true)
+})
+
+test.describe("Theme persistence (WM-8072)", () => {
+  test.use({ storageState: { cookies: [], origins: [] } })
+
+  test("Loads a saved theme from localStorage and applies it to data-theme on <html>", async ({
+    page,
+  }) => {
+    // Seed localStorage before any app code runs.
+    await page.addInitScript(() => {
+      localStorage.setItem("vite-ui-theme", "dark")
+    })
+
+    await page.goto("/login")
+    await expect(page.locator("html")).toHaveAttribute("data-theme", "dark")
+  })
+
+  test("Clicking a theme option updates localStorage value", async ({ page }) => {
+    await page.goto("/settings")
+
+    await page.getByTestId("theme-button").click()
+    await page.getByTestId("dark-mode").click()
+
+    await expect(page.locator("html")).toHaveAttribute("data-theme", "dark")
+
+    const stored = await page.evaluate(() =>
+      localStorage.getItem("vite-ui-theme"),
+    )
+    expect(stored).toBe("dark")
+  })
 })

@@ -24,14 +24,20 @@ const ICON_MAP: Record<Theme, LucideIcon> = {
 
 export const SidebarAppearance = () => {
   const { isMobile } = useSidebar()
-  const { setTheme, theme } = useTheme()
+  const { setTheme, theme, resolvedTheme } = useTheme()
   const Icon = ICON_MAP[theme]
+  const toggleAriaLabel =
+    resolvedTheme === "dark" ? "Switch to light theme" : "Switch to dark theme"
 
   return (
     <SidebarMenuItem>
       <DropdownMenu modal={false}>
         <DropdownMenuTrigger asChild>
-          <SidebarMenuButton tooltip="Appearance" data-testid="theme-button">
+          <SidebarMenuButton
+            tooltip="Appearance"
+            data-testid="theme-button"
+            aria-label={toggleAriaLabel}
+          >
             <Icon className="size-4 text-muted-foreground" />
             <span>Appearance</span>
             <span className="sr-only">Toggle theme</span>
@@ -67,13 +73,20 @@ export const SidebarAppearance = () => {
 }
 
 export const Appearance = () => {
-  const { setTheme } = useTheme()
+  const { resolvedTheme, setTheme } = useTheme()
+  const toggleAriaLabel =
+    resolvedTheme === "dark" ? "Switch to light theme" : "Switch to dark theme"
 
   return (
     <div className="flex items-center justify-center">
       <DropdownMenu modal={false}>
         <DropdownMenuTrigger asChild>
-          <Button data-testid="theme-button" variant="outline" size="icon">
+          <Button
+            data-testid="theme-button"
+            variant="outline"
+            size="icon"
+            aria-label={toggleAriaLabel}
+          >
             <Sun className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
             <Moon className="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
             <span className="sr-only">Toggle theme</span>
